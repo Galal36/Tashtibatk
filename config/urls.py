@@ -47,6 +47,7 @@ api_auth = [
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/content/", include("apps.content_api.urls")),
     path("api/", include(api_auth)),
     path("api/", include(router.urls)),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),

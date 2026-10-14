@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.articles",
     "apps.contacts",
     "apps.media",
+    "apps.content_api",
 ]
 
 MIDDLEWARE = [
@@ -171,3 +172,7 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "no-reply@example.com")
 CONTACT_NOTIFY_EMAIL = env("CONTACT_NOTIFY_EMAIL")
+
+# ── Content automation API (n8n) ──
+# Shared secret sent by n8n in the X-Content-Token header. Empty = API disabled.
+CONTENT_API_TOKEN = env("CONTENT_API_TOKEN", "")
