@@ -1,0 +1,200 @@
+
+<style>
+* { box-sizing: border-box; }
+.editor-wrap { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+.main-editor { display: flex; flex-direction: column; gap: 12px; }
+.seo-panel { display: flex; flex-direction: column; gap: 12px; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; }
+.card-head { padding: 10px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; font-weight: 500; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px; }
+.card-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); display: flex; justify-content: space-between; align-items: center; }
+.counter { font-weight: 400; }
+.counter.ok { color: var(--color-text-success); }
+.counter.warn { color: var(--color-text-warning); }
+.counter.over { color: var(--color-text-danger); }
+input[type=text], textarea, select { width: 100%; font-size: 13px; }
+textarea { resize: vertical; line-height: 1.5; }
+.preview-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; }
+.preview-url { font-size: 12px; color: var(--color-text-success); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preview-title { font-size: 14px; font-weight: 500; color: var(--color-text-info); margin-bottom: 2px; line-height: 1.3; }
+.preview-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+.score-bar { height: 4px; border-radius: 2px; background: var(--color-border-tertiary); overflow: hidden; margin-top: 4px; }
+.score-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-text-secondary); padding: 3px 0; }
+.check-row i { font-size: 14px; }
+.check-ok { color: var(--color-text-success); }
+.check-warn { color: var(--color-text-warning); }
+.check-bad { color: var(--color-text-danger); }
+.lang-tabs { display: flex; gap: 4px; }
+.lang-tab { font-size: 11px; padding: 3px 10px; border-radius: 4px; border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.lang-tab.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; }
+.publish-btn { width: 100%; padding: 9px; font-size: 13px; font-weight: 500; border-radius: var(--border-radius-md); border: none; background: var(--color-background-success); color: var(--color-text-success); cursor: pointer; }
+.save-btn { width: 100%; padding: 9px; font-size: 13px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-primary); cursor: pointer; margin-bottom: 6px; }
+</style>
+
+<div class="editor-wrap">
+  <div class="main-editor">
+    <div class="card">
+      <div class="card-head">
+        <i class="ti ti-file-text" aria-hidden="true"></i> Article content
+        <div class="lang-tabs" style="margin-left:auto">
+          <button class="lang-tab active">AR</button>
+          <button class="lang-tab">EN</button>
+          <button class="lang-tab">UR</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Article title (Arabic)</label>
+          <input type="text" id="art-title" value="أفضل شركات تشطيبات الشقق في الكويت" dir="rtl" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Slug</label>
+          <input type="text" value="afdal-sharikat-tashtiibat-alshiqaq-fi-alkuwait" style="font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary)">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select>
+            <option>تشطيبات شقق</option>
+            <option>سباكة</option>
+            <option>نجارة</option>
+            <option>نقل عفش</option>
+            <option>تجميل حدائق</option>
+            <option>تنظيف منازل</option>
+            <option>معدات ثقيلة</option>
+            <option>المونتال</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Body</label>
+          <textarea rows="6" dir="rtl" style="font-size:13px">تعتبر تشطيبات الشقق من أهم الخدمات في الكويت، حيث يسعى كثير من أصحاب الشقق الجديدة إلى إيجاد شركات موثوقة ومتخصصة...</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><i class="ti ti-search" aria-hidden="true"></i> SEO settings</div>
+      <div class="card-body">
+        <div class="field">
+          <label>
+            Meta title
+            <span class="counter" id="mt-counter">0 / 70</span>
+          </label>
+          <input type="text" id="meta-title" placeholder="Leave blank to use article title" dir="rtl" oninput="updateCounters(); updatePreview()">
+        </div>
+        <div class="field">
+          <label>
+            Meta description
+            <span class="counter" id="md-counter">0 / 160</span>
+          </label>
+          <textarea id="meta-desc" rows="3" dir="rtl" placeholder="Leave blank to use first 160 chars of body" oninput="updateCounters(); updatePreview()"></textarea>
+        </div>
+        <div class="field">
+          <label>OG image URL</label>
+          <input type="text" placeholder="https://yourdomain.kw/media/og/article-image.jpg">
+        </div>
+        <div class="field">
+          <label>Canonical URL <span style="font-weight:400;color:var(--color-text-tertiary)">(optional override)</span></label>
+          <input type="text" placeholder="Leave blank to auto-generate" style="font-size:12px">
+        </div>
+
+        <div style="margin-top:4px">
+          <div style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:6px;">Google preview</div>
+          <div class="preview-box">
+            <div class="preview-url" id="prev-url">yourdomain.kw › ar › articles › afdal-sharikat-tashtiibat...</div>
+            <div class="preview-title" id="prev-title">أفضل شركات تشطيبات الشقق في الكويت</div>
+            <div class="preview-desc" id="prev-desc">تعتبر تشطيبات الشقق من أهم الخدمات في الكويت، حيث يسعى كثير من أصحاب الشقق الجديدة إلى إيجاد شركات موث...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seo-panel">
+    <div class="card">
+      <div class="card-head"><i class="ti ti-chart-bar" aria-hidden="true"></i> SEO score</div>
+      <div class="card-body">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:28px;font-weight:500;color:var(--color-text-primary)" id="score-num">72</span>
+          <span style="font-size:13px;color:var(--color-text-secondary)">/100</span>
+        </div>
+        <div class="score-bar"><div class="score-fill" id="score-fill" style="width:72%;background:var(--color-background-warning)"></div></div>
+
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:2px" id="checks">
+          <div class="check-row"><i class="ti ti-circle-check check-ok"></i> Title length is good</div>
+          <div class="check-row"><i class="ti ti-circle-check check-ok"></i> Slug is URL-friendly</div>
+          <div class="check-row"><i class="ti ti-alert-circle check-warn"></i> Meta title not set</div>
+          <div class="check-row"><i class="ti ti-alert-circle check-warn"></i> Meta description missing</div>
+          <div class="check-row"><i class="ti ti-circle-x check-bad"></i> No OG image set</div>
+          <div class="check-row"><i class="ti ti-circle-check check-ok"></i> Language tag set (AR)</div>
+          <div class="check-row"><i class="ti ti-circle-check check-ok"></i> Category assigned</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><i class="ti ti-world" aria-hidden="true"></i> hreflang</div>
+      <div class="card-body" style="gap:6px">
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Link to translations</div>
+        <div class="field"><label>English version slug</label><input type="text" placeholder="complete-guide-apartment-finishing-kuwait" style="font-size:12px"></div>
+        <div class="field"><label>Urdu version slug</label><input type="text" placeholder="کویت-میں-فلیٹ-فنشنگ" style="font-size:12px;font-family:var(--font-sans)" dir="rtl"></div>
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px;">Leaving blank means no hreflang link for that language</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><i class="ti ti-calendar" aria-hidden="true"></i> Publishing</div>
+      <div class="card-body">
+        <div class="field"><label>Status</label>
+          <select><option>Draft</option><option>Published</option><option>Archived</option></select>
+        </div>
+        <div class="field"><label>Publish date</label>
+          <input type="text" value="2026-06-07" style="font-family:var(--font-mono);font-size:12px">
+        </div>
+        <button class="save-btn">Save draft</button>
+        <button class="publish-btn" onclick="sendPrompt('What are the best Arabic SEO practices for Kuwaiti home services content?')">Publish article ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateCounters() {
+  const mt = document.getElementById('meta-title').value;
+  const md = document.getElementById('meta-desc').value;
+  const mtC = document.getElementById('mt-counter');
+  const mdC = document.getElementById('md-counter');
+  mtC.textContent = mt.length + ' / 70';
+  mtC.className = 'counter ' + (mt.length === 0 ? '' : mt.length <= 60 ? 'ok' : mt.length <= 70 ? 'warn' : 'over');
+  mdC.textContent = md.length + ' / 160';
+  mdC.className = 'counter ' + (md.length === 0 ? '' : md.length <= 140 ? 'ok' : md.length <= 160 ? 'warn' : 'over');
+  updateScore(mt, md);
+}
+
+function updateScore(mt, md) {
+  let score = 50;
+  const ogInput = document.querySelectorAll('input[placeholder*="og"]')[0];
+  if (mt.length > 0 && mt.length <= 70) score += 15;
+  else if (mt.length > 70) score += 5;
+  if (md.length > 0 && md.length <= 160) score += 20;
+  else if (md.length > 160) score += 8;
+  if (ogInput && ogInput.value.length > 0) score += 15;
+  score = Math.min(score, 100);
+  document.getElementById('score-num').textContent = score;
+  const fill = document.getElementById('score-fill');
+  fill.style.width = score + '%';
+  fill.style.background = score >= 85 ? 'var(--color-background-success)' : score >= 60 ? 'var(--color-background-warning)' : 'var(--color-background-danger)';
+  const checks = document.getElementById('checks');
+  const rows = checks.querySelectorAll('.check-row');
+  rows[2].innerHTML = mt.length > 0 ? '<i class="ti ti-circle-check check-ok"></i> Meta title set' : '<i class="ti ti-alert-circle check-warn"></i> Meta title not set';
+  rows[3].innerHTML = md.length > 0 ? '<i class="ti ti-circle-check check-ok"></i> Meta description set' : '<i class="ti ti-alert-circle check-warn"></i> Meta description missing';
+}
+
+function updatePreview() {
+  const title = document.getElementById('meta-title').value || document.getElementById('art-title').value;
+  const desc = document.getElementById('meta-desc').value || 'تعتبر تشطيبات الشقق من أهم الخدمات في الكويت، حيث يسعى كثير من أصحاب الشقق الجديدة إلى إيجاد شركات موث...';
+  document.getElementById('prev-title').textContent = title.length > 60 ? title.slice(0, 60) + '...' : title;
+  document.getElementById('prev-desc').textContent = desc.length > 150 ? desc.slice(0, 150) + '...' : desc;
+}
+</script>

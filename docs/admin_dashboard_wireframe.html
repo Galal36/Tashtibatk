@@ -1,0 +1,300 @@
+
+<style>
+* { box-sizing: border-box; }
+h2.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+body { margin: 0; }
+.dash { display: grid; grid-template-columns: 180px 1fr; min-height: 560px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+.sidebar { background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); padding: 16px 0; display: flex; flex-direction: column; gap: 2px; }
+.brand { font-size: 13px; font-weight: 500; color: var(--color-text-primary); padding: 0 16px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 8px; }
+.brand span { font-size: 11px; color: var(--color-text-tertiary); display: block; font-weight: 400; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 16px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-radius: 0; transition: background 0.1s; }
+.nav-item:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+.nav-item.active { background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; border-right: 2px solid var(--color-border-info); }
+.nav-item i { font-size: 16px; }
+.nav-sep { height: 0.5px; background: var(--color-border-tertiary); margin: 8px 0; }
+.nav-label { font-size: 10px; color: var(--color-text-tertiary); padding: 4px 16px 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.main { display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.topbar-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.btn-sm { font-size: 12px; padding: 5px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-primary); cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; }
+.content { padding: 20px; flex: 1; overflow: hidden; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+.metric-label { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+.metric-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.metric-sub { font-size: 11px; color: var(--color-text-success); margin-top: 2px; }
+.section-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.panel { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; }
+.panel-head { padding: 10px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; font-weight: 500; color: var(--color-text-secondary); display: flex; justify-content: space-between; align-items: center; }
+.panel-head a { font-size: 11px; color: var(--color-text-info); cursor: pointer; font-weight: 400; }
+.art-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.art-row:last-child { border-bottom: none; }
+.art-lang { font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px; min-width: 24px; text-align: center; }
+.lang-ar { background: var(--color-background-info); color: var(--color-text-info); }
+.lang-en { background: var(--color-background-success); color: var(--color-text-success); }
+.lang-ur { background: var(--color-background-warning); color: var(--color-text-warning); }
+.art-info { flex: 1; min-width: 0; }
+.art-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art-meta { font-size: 11px; color: var(--color-text-tertiary); }
+.status-pill { font-size: 10px; padding: 2px 7px; border-radius: 10px; }
+.pill-pub { background: var(--color-background-success); color: var(--color-text-success); }
+.pill-draft { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.contact-row { padding: 9px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.contact-row:last-child { border-bottom: none; }
+.contact-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+.contact-detail { font-size: 11px; color: var(--color-text-tertiary); margin-top: 1px; }
+.contact-svc { font-size: 11px; color: var(--color-text-info); margin-top: 2px; }
+.unread-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-background-danger); display: inline-block; margin-right: 4px; vertical-align: middle; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--color-background-info); color: var(--color-text-info); font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.page { display: none; }
+.page.active { display: block; }
+</style>
+
+<h2 class="sr-only">Admin dashboard mockup for Kuwait home services platform</h2>
+
+<div class="dash">
+  <div class="sidebar">
+    <div class="brand">خدمات الكويت<span>Admin panel</span></div>
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('overview', this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Overview</div>
+    <div class="nav-item" onclick="showPage('articles', this)"><i class="ti ti-file-text" aria-hidden="true"></i> Articles</div>
+    <div class="nav-item" onclick="showPage('contacts', this)"><i class="ti ti-mail" aria-hidden="true"></i> Contacts <span style="margin-left:auto;background:var(--color-background-danger);color:var(--color-text-danger);font-size:10px;padding:1px 6px;border-radius:8px;">5</span></div>
+    <div class="nav-item" onclick="showPage('services', this)"><i class="ti ti-tools" aria-hidden="true"></i> Services</div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">Admin only</div>
+    <div class="nav-item" onclick="showPage('users', this)"><i class="ti ti-users" aria-hidden="true"></i> Users</div>
+    <div class="nav-item" onclick="sendPrompt('How do I configure SEO settings in the site?')"><i class="ti ti-settings" aria-hidden="true"></i> Settings ↗</div>
+    <div style="flex:1"></div>
+    <div class="nav-sep"></div>
+    <div class="nav-item"><i class="ti ti-user" aria-hidden="true"></i> <span style="font-size:12px">Ahmad Al-Rashid</span></div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="page-title">Overview</span>
+      <div class="topbar-actions">
+        <select style="font-size:12px;padding:4px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);">
+          <option>Arabic (AR)</option>
+          <option>English (EN)</option>
+          <option>Urdu (UR)</option>
+        </select>
+        <button class="btn-sm btn-primary" onclick="sendPrompt('How do I create a new article with good SEO in this system?')"><i class="ti ti-plus" style="font-size:13px"></i> New article ↗</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="page active" id="page-overview">
+        <div class="metrics">
+          <div class="metric"><div class="metric-label">Published articles</div><div class="metric-val">47</div><div class="metric-sub">+3 this week</div></div>
+          <div class="metric"><div class="metric-label">Draft articles</div><div class="metric-val">12</div></div>
+          <div class="metric"><div class="metric-label">New contacts</div><div class="metric-val">5</div><div class="metric-sub" style="color:var(--color-text-danger)">Unread</div></div>
+          <div class="metric"><div class="metric-label">Services listed</div><div class="metric-val">8</div></div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <div class="section-title">Recent articles</div>
+            <div class="panel">
+              <div class="panel-head">Latest <a onclick="showPage('articles', document.querySelector('[onclick*=articles]'))">View all</a></div>
+              <div class="art-row">
+                <span class="art-lang lang-ar">AR</span>
+                <div class="art-info"><div class="art-title">أفضل شركات تشطيبات الشقق في الكويت</div><div class="art-meta">Ahmad · 2h ago</div></div>
+                <span class="status-pill pill-pub">Published</span>
+              </div>
+              <div class="art-row">
+                <span class="art-lang lang-en">EN</span>
+                <div class="art-info"><div class="art-title">Complete guide to apartment finishing in Kuwait</div><div class="art-meta">Sara · 5h ago</div></div>
+                <span class="status-pill pill-draft">Draft</span>
+              </div>
+              <div class="art-row">
+                <span class="art-lang lang-ar">AR</span>
+                <div class="art-info"><div class="art-title">خدمات نقل العفش الموثوقة بالكويت</div><div class="art-meta">Ahmad · Yesterday</div></div>
+                <span class="status-pill pill-pub">Published</span>
+              </div>
+              <div class="art-row">
+                <span class="art-lang lang-ur">UR</span>
+                <div class="art-info"><div class="art-title">کویت میں صفائی خدمات</div><div class="art-meta">Tariq · 2d ago</div></div>
+                <span class="status-pill pill-pub">Published</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="section-title">Unread contact forms</div>
+            <div class="panel">
+              <div class="panel-head">Inbox <a onclick="showPage('contacts', document.querySelector('[onclick*=contacts]'))">View all</a></div>
+              <div class="contact-row">
+                <div class="contact-name"><span class="unread-dot"></span>Mohammed Al-Enezi</div>
+                <div class="contact-svc">تشطيبات شقق</div>
+                <div class="contact-detail">+965 9876 5432 · 1h ago</div>
+              </div>
+              <div class="contact-row">
+                <div class="contact-name"><span class="unread-dot"></span>Ravi Kumar</div>
+                <div class="contact-svc">نقل عفش</div>
+                <div class="contact-detail">+965 6543 2198 · 3h ago</div>
+              </div>
+              <div class="contact-row">
+                <div class="contact-name"><span class="unread-dot"></span>Fatima Al-Sabah</div>
+                <div class="contact-svc">تجميل حدائق</div>
+                <div class="contact-detail">+965 5511 8833 · 6h ago</div>
+              </div>
+              <div class="contact-row">
+                <div class="contact-name">James Okafor</div>
+                <div class="contact-svc">تنظيف منازل</div>
+                <div class="contact-detail">+965 6622 9944 · Yesterday</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-articles">
+        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+          <select style="font-size:12px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);">
+            <option>All languages</option><option>Arabic</option><option>English</option><option>Urdu</option>
+          </select>
+          <select style="font-size:12px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);">
+            <option>All statuses</option><option>Published</option><option>Draft</option><option>Archived</option>
+          </select>
+          <select style="font-size:12px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);">
+            <option>All services</option><option>تشطيبات</option><option>سباكة</option><option>نجارة</option><option>نقل عفش</option>
+          </select>
+          <input type="text" placeholder="Search articles..." style="flex:1;min-width:120px;font-size:12px;padding:5px 10px;">
+        </div>
+        <div class="panel">
+          <div class="panel-head">47 articles</div>
+          <div class="art-row"><span class="art-lang lang-ar">AR</span><div class="art-info"><div class="art-title">أفضل شركات تشطيبات الشقق في الكويت</div><div class="art-meta">تشطيبات شقق · Ahmad · 2h ago</div></div><span class="status-pill pill-pub">Published</span><button class="btn-sm" style="margin-left:8px" onclick="sendPrompt('Show me the Django admin article edit view code')"><i class="ti ti-edit" style="font-size:12px"></i></button></div>
+          <div class="art-row"><span class="art-lang lang-en">EN</span><div class="art-info"><div class="art-title">Complete guide to apartment finishing in Kuwait</div><div class="art-meta">Finishing · Sara · 5h ago</div></div><span class="status-pill pill-draft">Draft</span><button class="btn-sm" style="margin-left:8px"><i class="ti ti-edit" style="font-size:12px"></i></button></div>
+          <div class="art-row"><span class="art-lang lang-ar">AR</span><div class="art-info"><div class="art-title">خدمات نقل العفش الموثوقة بالكويت</div><div class="art-meta">نقل عفش · Ahmad · Yesterday</div></div><span class="status-pill pill-pub">Published</span><button class="btn-sm" style="margin-left:8px"><i class="ti ti-edit" style="font-size:12px"></i></button></div>
+          <div class="art-row"><span class="art-lang lang-ur">UR</span><div class="art-info"><div class="art-title">کویت میں صفائی خدمات</div><div class="art-meta">تنظيف · Tariq · 2d ago</div></div><span class="status-pill pill-pub">Published</span><button class="btn-sm" style="margin-left:8px"><i class="ti ti-edit" style="font-size:12px"></i></button></div>
+          <div class="art-row"><span class="art-lang lang-ar">AR</span><div class="art-info"><div class="art-title">كيفية اختيار شركة سباكة موثوقة</div><div class="art-meta">سباكة · Ahmad · 3d ago</div></div><span class="status-pill pill-pub">Published</span><button class="btn-sm" style="margin-left:8px"><i class="ti ti-edit" style="font-size:12px"></i></button></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-contacts">
+        <div class="panel">
+          <div class="panel-head">Contact inbox <span style="font-size:11px;background:var(--color-background-danger);color:var(--color-text-danger);padding:1px 7px;border-radius:8px;">5 unread</span></div>
+          <div class="contact-row" style="display:flex;gap:12px;align-items:flex-start;">
+            <div class="avatar">ME</div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="contact-name"><span class="unread-dot"></span>Mohammed Al-Enezi</div>
+                <span style="font-size:11px;color:var(--color-text-tertiary)">1h ago</span>
+              </div>
+              <div class="contact-svc">تشطيبات شقق · Kuwait City</div>
+              <div class="contact-detail">+965 9876 5432 · m.alenezi@gmail.com</div>
+              <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">"Looking for a full apartment finishing service for a new 3-bedroom flat..."</div>
+            </div>
+          </div>
+          <div class="contact-row" style="display:flex;gap:12px;align-items:flex-start;">
+            <div class="avatar" style="background:var(--color-background-success);color:var(--color-text-success)">RK</div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="contact-name"><span class="unread-dot"></span>Ravi Kumar</div>
+                <span style="font-size:11px;color:var(--color-text-tertiary)">3h ago</span>
+              </div>
+              <div class="contact-svc">نقل عفش · Salmiya</div>
+              <div class="contact-detail">+965 6543 2198</div>
+              <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">"Need furniture moving from Salmiya to Mahboula next Friday..."</div>
+            </div>
+          </div>
+          <div class="contact-row" style="display:flex;gap:12px;align-items:flex-start;">
+            <div class="avatar" style="background:var(--color-background-warning);color:var(--color-text-warning)">FS</div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="contact-name"><span class="unread-dot"></span>Fatima Al-Sabah</div>
+                <span style="font-size:11px;color:var(--color-text-tertiary)">6h ago</span>
+              </div>
+              <div class="contact-svc">تجميل حدائق · Rumaithiya</div>
+              <div class="contact-detail">+965 5511 8833</div>
+              <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">"Want to redesign my villa garden with native plants..."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-services">
+        <div class="section-title">Service categories</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-building" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">تشطيبات شقق</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">12 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-droplet" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">سباكة</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">7 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-tools" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">نجارة</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">5 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-truck" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">نقل عفش</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">8 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-plant" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">تجميل حدائق</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">6 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-home-check" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">تنظيف منازل</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">9 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-bulldozer" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">معدات ثقيلة</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">3 articles</div>
+          </div>
+          <div class="panel" style="padding:14px;text-align:center;cursor:pointer;">
+            <i class="ti ti-plug" style="font-size:22px;color:var(--color-text-info);" aria-hidden="true"></i>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">المونتال</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);">4 articles</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-users">
+        <div class="section-title">Team members</div>
+        <div class="panel">
+          <div class="panel-head">3 users</div>
+          <div class="art-row" style="gap:12px;">
+            <div class="avatar">AR</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500;">Ahmad Al-Rashid</div><div style="font-size:11px;color:var(--color-text-tertiary);">ahmad@site.kw</div></div>
+            <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:var(--color-background-danger);color:var(--color-text-danger);">Admin</span>
+          </div>
+          <div class="art-row" style="gap:12px;">
+            <div class="avatar" style="background:var(--color-background-success);color:var(--color-text-success)">SH</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500;">Sara Hassan</div><div style="font-size:11px;color:var(--color-text-tertiary);">sara@site.kw</div></div>
+            <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:var(--color-background-info);color:var(--color-text-info);">Moderator</span>
+          </div>
+          <div class="art-row" style="gap:12px;">
+            <div class="avatar" style="background:var(--color-background-warning);color:var(--color-text-warning)">TK</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500;">Tariq Khan</div><div style="font-size:11px;color:var(--color-text-tertiary);">tariq@site.kw</div></div>
+            <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:var(--color-background-info);color:var(--color-text-info);">Moderator</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = { overview: 'Overview', articles: 'Articles', contacts: 'Contacts', services: 'Services', users: 'Users' };
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('page-title').textContent = titles[name] || name;
+}
+</script>

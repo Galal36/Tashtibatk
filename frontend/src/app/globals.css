@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --header-h: 4.5rem;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-h);
+  }
+  body {
+    @apply bg-white text-slate-800 antialiased;
+    font-feature-settings: "ss01";
+  }
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight text-slate-900;
+    text-wrap: balance;
+  }
+  ::selection {
+    @apply bg-brand-500/20;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5
+           text-sm font-semibold transition-all duration-200
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+           focus-visible:ring-brand-500 disabled:opacity-60 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white shadow-card hover:bg-brand-700 hover:-translate-y-0.5;
+  }
+  .btn-accent {
+    @apply btn bg-accent-500 text-white shadow-card hover:bg-accent-600 hover:-translate-y-0.5;
+  }
+  .btn-outline {
+    @apply btn border border-slate-300 bg-white text-slate-800 hover:border-brand-400 hover:text-brand-700;
+  }
+  .btn-ghost {
+    @apply btn text-slate-700 hover:bg-slate-100;
+  }
+  .btn-lg {
+    @apply px-7 py-3.5 text-base;
+  }
+
+  /* Form fields */
+  .input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm
+           text-slate-900 placeholder:text-slate-400 outline-none transition
+           focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  /* Card */
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-card transition-all duration-300;
+  }
+  .card-hover {
+    @apply hover:-translate-y-1 hover:border-brand-200 hover:shadow-card-hover;
+  }
+
+  /* Section eyebrow label */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1
+           text-xs font-semibold uppercase tracking-wide text-brand-700;
+  }
+
+  /* Article body typography (Arabic-friendly, RTL-aware) */
+  .article-body {
+    @apply text-[1.0625rem] leading-[1.9] text-slate-700;
+  }
+  .article-body h2 {
+    @apply mt-10 mb-4 text-2xl font-bold text-slate-900;
+  }
+  .article-body h3 {
+    @apply mt-8 mb-3 text-xl font-bold text-slate-900;
+  }
+  .article-body p {
+    @apply my-4;
+  }
+  .article-body a {
+    @apply font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800;
+  }
+  .article-body ul {
+    @apply my-4 list-disc space-y-2 ps-6;
+  }
+  .article-body ol {
+    @apply my-4 list-decimal space-y-2 ps-6;
+  }
+  .article-body img {
+    @apply my-6 rounded-2xl;
+  }
+  .article-body blockquote {
+    @apply my-6 border-s-4 border-brand-300 bg-slate-50 px-5 py-3 text-slate-600;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Subtle dotted backdrop for hero sections */
+  .bg-grid {
+    background-image: radial-gradient(rgba(28, 47, 125, 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
+
+/* ── TipTap rich editor content ─────────────────────────────────────────── */
+.tiptap:focus {
+  outline: none;
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: inline-start;
+  height: 0;
+  pointer-events: none;
+  color: #94a3b8;
+}
+.tiptap table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+.tiptap th,
+.tiptap td {
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+.tiptap th {
+  background: #f1f5f9;
+  font-weight: 700;
+}
+.tiptap .selectedCell::after {
+  background: rgba(59, 130, 246, 0.12);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+.tiptap img.ProseMirror-selectednode {
+  outline: 3px solid #3b82f6;
+}
+.tiptap pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  font-family: ui-monospace, monospace;
+}
+.tiptap hr {
+  border: none;
+  border-top: 2px solid #e2e8f0;
+  margin: 1.5rem 0;
+}

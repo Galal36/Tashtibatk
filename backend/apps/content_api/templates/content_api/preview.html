@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="{{ articles.0.obj.language|default:'ar' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Preview — {{ site_name }}</title>
+<style>
+  body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f4f4f5; color: #18181b; line-height: 1.8; }
+  .bar { background: #b45309; color: #fff; padding: 10px 16px; font-size: 14px; position: sticky; top: 0; }
+  .bar a { color: #fff; margin-inline-end: 12px; }
+  article { background: #fff; max-width: 820px; margin: 20px auto; padding: 24px 28px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .meta { background: #fafafa; border: 1px dashed #d4d4d8; padding: 10px 14px; font-size: 13px; color: #52525b; margin-bottom: 18px; }
+  h1 { line-height: 1.4; }
+  table { border-collapse: collapse; } td, th { border: 1px solid #ddd; padding: 6px; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="bar">
+  DRAFT PREVIEW — {{ site_name }} — status: <strong>{{ submission.status }}</strong> &nbsp;
+  {% for a in articles %}<a href="#{{ a.obj.language }}">{{ a.obj.language|upper }}</a>{% endfor %}
+</div>
+{% for a in articles %}
+<article id="{{ a.obj.language }}" lang="{{ a.obj.language }}" dir="{% if a.rtl %}rtl{% else %}ltr{% endif %}">
+  <div class="meta" dir="ltr">
+    <div><strong>{{ a.obj.language|upper }}</strong> · category: {{ a.obj.category.slug|default:"—" }} · slug: {{ a.obj.slug }}</div>
+    <div>meta description ({{ a.obj.meta_description|length }}/160): <span dir="auto">{{ a.obj.meta_description }}</span></div>
+    <div>excerpt: <span dir="auto">{{ a.obj.og_description }}</span></div>
+  </div>
+  <h1>{{ a.obj.title }}</h1>
+  {{ a.obj.body|safe }}
+</article>
+{% empty %}
+<article><p>No articles in this submission (it may have been rejected).</p></article>
+{% endfor %}
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Runs the scheduled-article publisher every 5 minutes.
+[Unit]
+Description=Run Service Online scheduled-article publisher every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+Unit=service_online-publish-scheduled.service
+
+[Install]
+WantedBy=timers.target

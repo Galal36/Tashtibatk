@@ -1,0 +1,15 @@
+# Publishes scheduled articles whose time has arrived. Triggered by the
+# accompanying .timer every 5 minutes.
+# Install: sudo cp deploy/service_online-publish-scheduled.{service,timer} /etc/systemd/system/
+#          sudo systemctl daemon-reload && sudo systemctl enable --now service_online-publish-scheduled.timer
+[Unit]
+Description=Service Online - publish due scheduled articles
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=moga
+Group=moga
+WorkingDirectory=/var/www/moga/apps/service_online/backend
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/var/www/moga/apps/service_online/backend/venv/bin/python manage.py publish_scheduled

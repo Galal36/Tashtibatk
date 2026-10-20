@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Service Online — nginx vhost template
+#
+# Replace REPLACE_ME_DOMAIN with the real domain, then:
+#   sudo cp deploy/nginx.conf.template /etc/nginx/sites-available/service_online
+#   sudo ln -s /etc/nginx/sites-available/service_online /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#   sudo certbot --nginx -d REPLACE_ME_DOMAIN -d www.REPLACE_ME_DOMAIN
+#
+# Routing model:
+#   /            -> Next.js (3010)  — owns all public pages, RTL, i18n
+#   /api/        -> Django (8012)   — REST API
+#   /admin/      -> Django (8012)   — Django admin
+#   /static/ /media/ -> Django files
+#   /sitemap.xml /robots.txt -> Django (generated, per-language hreflang)
+# ─────────────────────────────────────────────────────────────────────────
+server {
+    listen 80;
+    server_name REPLACE_ME_DOMAIN www.REPLACE_ME_DOMAIN;
+
+    client_max_body_size 20M;
+
+    # Django API
+    location /api/ {
+        proxy_pass http://127.0.0.1:8012;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /admin/ {
+        proxy_pass http://127.0.0.1:8012;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /sitemap.xml { proxy_pass http://127.0.0.1:8012; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto $scheme; }
+    location = /robots.txt  { proxy_pass http://127.0.0.1:8012; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto $scheme; }
+
+    location /static/ { alias /var/www/moga/apps/service_online/backend/staticfiles/; }
+    location /media/  { alias /var/www/moga/apps/service_online/backend/media/; }
+
+    # Everything else -> Next.js
+    location / {
+        proxy_pass http://127.0.0.1:3010;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

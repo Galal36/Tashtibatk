@@ -1,0 +1,137 @@
+
+<style>
+pre { margin: 0; font-family: var(--font-mono); font-size: 13px; line-height: 1.65; color: var(--color-text-primary); white-space: pre; overflow-x: auto; }
+.kw { color: #534AB7; }
+.st { color: #0F6E56; }
+.cm { color: var(--color-text-tertiary); font-style: italic; }
+.fn { color: #185FA5; }
+.cl { color: #854F0B; }
+.dec { color: #993C1D; }
+.sec { border-top: 0.5px solid var(--color-border-tertiary); margin-top: 1.5rem; padding-top: 1rem; }
+.sec-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+</style>
+
+<div class="sec-label">models.py — Article</div>
+<pre><span class="kw">from</span> django.db <span class="kw">import</span> models
+<span class="kw">from</span> django.contrib.auth <span class="kw">import</span> get_user_model
+<span class="kw">import</span> uuid
+
+User = get_user_model()
+
+
+<span class="kw">class</span> <span class="cl">ServiceCategory</span>(models.Model):
+    id           = models.<span class="fn">UUIDField</span>(primary_key=<span class="kw">True</span>, default=uuid.uuid4, editable=<span class="kw">False</span>)
+    slug         = models.<span class="fn">SlugField</span>(unique=<span class="kw">True</span>)
+    name_ar      = models.<span class="fn">CharField</span>(max_length=<span class="st">120</span>)
+    name_en      = models.<span class="fn">CharField</span>(max_length=<span class="st">120</span>)
+    name_ur      = models.<span class="fn">CharField</span>(max_length=<span class="st">120</span>)
+    icon         = models.<span class="fn">CharField</span>(max_length=<span class="st">60</span>, blank=<span class="kw">True</span>)
+    display_order = models.<span class="fn">PositiveIntegerField</span>(default=<span class="st">0</span>)
+
+    <span class="kw">class</span> <span class="cl">Meta</span>:
+        ordering = [<span class="st">'display_order'</span>]
+        verbose_name_plural = <span class="st">'service categories'</span>
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(self):
+        <span class="kw">return</span> self.name_en
+
+
+<span class="kw">class</span> <span class="cl">Article</span>(models.Model):
+
+    <span class="cm"># Status choices</span>
+    DRAFT     = <span class="st">'draft'</span>
+    PUBLISHED = <span class="st">'published'</span>
+    ARCHIVED  = <span class="st">'archived'</span>
+    STATUS_CHOICES = [
+        (DRAFT,     <span class="st">'Draft'</span>),
+        (PUBLISHED, <span class="st">'Published'</span>),
+        (ARCHIVED,  <span class="st">'Archived'</span>),
+    ]
+
+    <span class="cm"># Language choices</span>
+    AR = <span class="st">'ar'</span>
+    EN = <span class="st">'en'</span>
+    UR = <span class="st">'ur'</span>
+    LANGUAGE_CHOICES = [
+        (AR, <span class="st">'Arabic'</span>),
+        (EN, <span class="st">'English'</span>),
+        (UR, <span class="st">'Urdu'</span>),
+    ]
+
+    <span class="cm"># Core fields</span>
+    id           = models.<span class="fn">UUIDField</span>(primary_key=<span class="kw">True</span>, default=uuid.uuid4, editable=<span class="kw">False</span>)
+    author       = models.<span class="fn">ForeignKey</span>(User, on_delete=models.SET_NULL, null=<span class="kw">True</span>, related_name=<span class="st">'articles'</span>)
+    category     = models.<span class="fn">ForeignKey</span>(ServiceCategory, on_delete=models.SET_NULL, null=<span class="kw">True</span>, related_name=<span class="st">'articles'</span>)
+    language     = models.<span class="fn">CharField</span>(max_length=<span class="st">2</span>, choices=LANGUAGE_CHOICES, default=AR)
+    status       = models.<span class="fn">CharField</span>(max_length=<span class="st">12</span>, choices=STATUS_CHOICES, default=DRAFT)
+
+    <span class="cm"># Content</span>
+    title        = models.<span class="fn">CharField</span>(max_length=<span class="st">255</span>)
+    slug         = models.<span class="fn">SlugField</span>(max_length=<span class="st">255</span>, unique=<span class="kw">True</span>)
+    body         = models.<span class="fn">TextField</span>()
+
+    <span class="cm"># SEO fields</span>
+    meta_title       = models.<span class="fn">CharField</span>(max_length=<span class="st">70</span>, blank=<span class="kw">True</span>)
+    meta_description = models.<span class="fn">CharField</span>(max_length=<span class="st">160</span>, blank=<span class="kw">True</span>)
+    og_image_url     = models.<span class="fn">URLField</span>(blank=<span class="kw">True</span>)
+    canonical_url    = models.<span class="fn">URLField</span>(blank=<span class="kw">True</span>)
+
+    <span class="cm"># Timestamps</span>
+    published_at = models.<span class="fn">DateTimeField</span>(null=<span class="kw">True</span>, blank=<span class="kw">True</span>)
+    created_at   = models.<span class="fn">DateTimeField</span>(auto_now_add=<span class="kw">True</span>)
+    updated_at   = models.<span class="fn">DateTimeField</span>(auto_now=<span class="kw">True</span>)
+
+    <span class="kw">class</span> <span class="cl">Meta</span>:
+        ordering = [<span class="st">'-published_at'</span>]
+        indexes = [
+            models.<span class="fn">Index</span>(fields=[<span class="st">'language'</span>, <span class="st">'status'</span>]),
+            models.<span class="fn">Index</span>(fields=[<span class="st">'category'</span>, <span class="st">'language'</span>]),
+            models.<span class="fn">Index</span>(fields=[<span class="st">'slug'</span>]),
+        ]
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(self):
+        <span class="kw">return</span> <span class="st">f"[{self.language.upper()}] {self.title}"</span>
+
+    <span class="kw">def</span> <span class="fn">publish</span>(self):
+        <span class="kw">from</span> django.utils <span class="kw">import</span> timezone
+        self.status = self.PUBLISHED
+        self.published_at = timezone.<span class="fn">now</span>()
+        self.<span class="fn">save</span>(update_fields=[<span class="st">'status'</span>, <span class="st">'published_at'</span>])
+
+    <span class="kw">@property</span>
+    <span class="kw">def</span> <span class="fn">effective_meta_title</span>(self):
+        <span class="cm"># Falls back to article title if meta_title not set</span>
+        <span class="kw">return</span> self.meta_title <span class="kw">or</span> self.title
+
+    <span class="kw">@property</span>
+    <span class="kw">def</span> <span class="fn">effective_meta_description</span>(self):
+        <span class="kw">return</span> self.meta_description <span class="kw">or</span> self.body[:<span class="st">160</span>]
+</pre>
+
+<div class="sec">
+<div class="sec-label">serializers.py — ArticleSerializer (DRF)</div>
+<pre><span class="kw">from</span> rest_framework <span class="kw">import</span> serializers
+<span class="kw">from</span> .models <span class="kw">import</span> Article
+
+<span class="kw">class</span> <span class="cl">ArticleSerializer</span>(serializers.ModelSerializer):
+    author_name     = serializers.<span class="fn">CharField</span>(source=<span class="st">'author.full_name'</span>, read_only=<span class="kw">True</span>)
+    category_name   = serializers.<span class="fn">SerializerMethodField</span>()
+    effective_meta  = serializers.<span class="fn">SerializerMethodField</span>()
+
+    <span class="kw">class</span> <span class="cl">Meta</span>:
+        model  = Article
+        fields = <span class="st">'__all__'</span>
+        read_only_fields = [<span class="st">'id'</span>, <span class="st">'author'</span>, <span class="st">'created_at'</span>, <span class="st">'updated_at'</span>]
+
+    <span class="kw">def</span> <span class="fn">get_category_name</span>(self, obj):
+        lang = obj.language
+        <span class="kw">return</span> <span class="fn">getattr</span>(obj.category, <span class="st">f'name_{lang}'</span>, obj.category.name_en)
+
+    <span class="kw">def</span> <span class="fn">get_effective_meta</span>(self, obj):
+        <span class="kw">return</span> {
+            <span class="st">'title'</span>: obj.effective_meta_title,
+            <span class="st">'description'</span>: obj.effective_meta_description,
+            <span class="st">'og_image'</span>: obj.og_image_url,
+        }
+</pre>
+</div>

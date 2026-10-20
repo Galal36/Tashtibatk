@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class ContentApiConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.content_api"
+    verbose_name = "Content automation"
