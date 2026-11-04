@@ -5,12 +5,20 @@ Token-protected content API used by n8n. Same contract on every site:
   POST /api/content/articles/                 create AR/EN/UR drafts
   POST /api/content/articles/<id>/publish/    publish the whole set
   POST /api/content/articles/<id>/reject/     reject the whole set
+  POST /api/content/topics/skip/              skip topics the writer found already covered
   GET  /api/content/preview/<token>/          noindex preview (no auth; unguessable token)
 """
+import base64
+import re
+import binascii
 import hmac
+import io
+import os
 import uuid
 
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -22,7 +30,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
 from apps.articles.models import Article
-from apps.services.models import ServiceCategory
+from apps.services.models import ServiceCategory, ServicePage
 
 from .models import Submission, Topic
 
@@ -32,6 +40,13 @@ FAQ_HEADING = {"ar": "الأسئلة الشائعة", "en": "Frequently Asked Qu
 RTL = {"ar", "ur"}
 # After this many rejections a topic is skipped instead of re-queued.
 MAX_REJECTIONS = 2
+# The writer tries up to this many queued topics per run (duplicates are skipped).
+CANDIDATES = 3
+# Generated illustrations (make_images.py): 1 featured + up to 2 inline per language.
+IMAGE_SIZE = (1200, 675)
+IMAGE_MAX_BYTES = 150_000
+MAX_INLINE_IMAGES = 2
+IMAGE_DIR = "articles/auto"
 
 
 class HasContentToken(BasePermission):
@@ -93,30 +108,127 @@ def _validate_article(language, data):
     return None
 
 
+def _decode_image(language, key, item):
+    """Returns (bytes, alt) for one generated image or raises ValueError."""
+    from PIL import Image
+
+    if not isinstance(item, dict) or not item.get("data") or not str(item.get("alt") or "").strip():
+        raise ValueError(f"{language}/{key}: image needs data and alt")
+    try:
+        raw = base64.b64decode(item["data"], validate=True)
+    except (binascii.Error, ValueError):
+        raise ValueError(f"{language}/{key}: data is not base64")
+    if len(raw) > IMAGE_MAX_BYTES:
+        raise ValueError(f"{language}/{key}: image is {len(raw)} bytes (max {IMAGE_MAX_BYTES})")
+    try:
+        with Image.open(io.BytesIO(raw)) as im:
+            fmt, size = im.format, im.size
+    except Exception:
+        raise ValueError(f"{language}/{key}: not an image")
+    if fmt != "WEBP" or size != IMAGE_SIZE:
+        raise ValueError(f"{language}/{key}: must be WEBP {IMAGE_SIZE[0]}x{IMAGE_SIZE[1]}, got {fmt} {size}")
+    return raw, str(item["alt"]).strip()[:160]
+
+
+def _validate_images(language, images):
+    """images = {"featured": {data, alt}, "inline": [{key, data, alt}, ...]} (optional)."""
+    if images in (None, {}):
+        return {}
+    if not isinstance(images, dict) or "featured" not in images:
+        raise ValueError(f"{language}: images must include 'featured'")
+    out = {"featured": _decode_image(language, "featured", images["featured"]), "inline": []}
+    inline = images.get("inline") or []
+    if not isinstance(inline, list) or len(inline) > MAX_INLINE_IMAGES:
+        raise ValueError(f"{language}: at most {MAX_INLINE_IMAGES} inline images")
+    for item in inline:
+        key = str((item or {}).get("key") or "")
+        if not key.isidentifier():
+            raise ValueError(f"{language}: inline image key must be a simple name")
+        out["inline"].append((key, *_decode_image(language, key, item)))
+    return out
+
+
+def _store_image(submission_id, language, key, raw):
+    name = default_storage.save(f"{IMAGE_DIR}/{submission_id}/{language}-{key}.webp", ContentFile(raw))
+    return name, _site_url(default_storage.url(name))
+
+
+def _delete_images(submission_id, articles):
+    for article in articles:
+        for f in (article.featured_image, article.og_image):
+            if f and f.name and default_storage.exists(f.name):
+                default_storage.delete(f.name)
+    folder = f"{IMAGE_DIR}/{submission_id}"
+    try:
+        _dirs, files = default_storage.listdir(folder)
+        for name in files:
+            default_storage.delete(f"{folder}/{name}")
+        os.rmdir(default_storage.path(folder))
+    except (FileNotFoundError, NotImplementedError, OSError):
+        pass
+
+
+def _topic_json(topic):
+    return {
+        "id": topic.id,
+        "title": topic.title,
+        "keyword": topic.keyword,
+        "notes": topic.notes,
+        "category": topic.category.slug if topic.category else OTHERS_SLUG,
+    }
+
+
+def _skip_topics(items):
+    """items = [{"id": .., "reason": ..}] -> marks pending topics skipped; returns the ones changed."""
+    done = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        topic = Topic.objects.select_for_update().filter(pk=item.get("id"), status=Topic.PENDING).first()
+        if topic is None:
+            continue
+        reason = str(item.get("reason") or "").strip()[:500]
+        topic.status = Topic.SKIPPED
+        topic.notes = f"{topic.notes}\nSkipped: {reason}".strip() if reason else topic.notes
+        topic.save(update_fields=["status", "notes", "updated_at"])
+        done.append({"id": topic.id, "title": topic.title, "reason": reason})
+    return done
+
+
 @content_endpoint(["GET"])
 def next_topic(request):
-    topic = Topic.objects.filter(status=Topic.PENDING).select_related("category").first()
-    recent = (
-        Article.objects.filter(status=Article.PUBLISHED, language=settings.DEFAULT_LOCALE)
+    candidates = list(Topic.objects.filter(status=Topic.PENDING).select_related("category")[:CANDIDATES])
+    topic = candidates[0] if candidates else None
+    published = list(
+        Article.objects.filter(status=Article.PUBLISHED)
         .select_related("category")
-        .order_by("-published_at")[:40]
+        .order_by("-published_at")
     )
-    categories = ServiceCategory.objects.all()
+    by_group = {}
+    for a in published:
+        by_group.setdefault(a.translation_group, {})[a.language] = _article_url(a)
+    recent = [a for a in published if a.language == settings.DEFAULT_LOCALE]
+    categories = ServiceCategory.objects.exclude(slug=OTHERS_SLUG)
+    service_pages = {}
+    for page in ServicePage.objects.filter(is_active=True).select_related("category"):
+        service_pages.setdefault(page.category.slug, {})[page.language] = _site_url(f"/{page.language}/services/{page.slug}")
     return Response({
         "site": settings.SITE_NAME,
         "domain": settings.SITE_DOMAIN,
         "languages": settings.LOCALES,
         "pending_count": Topic.objects.filter(status=Topic.PENDING).count(),
-        "topic": topic and {
-            "id": topic.id,
-            "title": topic.title,
-            "keyword": topic.keyword,
-            "notes": topic.notes,
-            "category": topic.category.slug if topic.category else OTHERS_SLUG,
-        },
-        "categories": [{"slug": c.slug, "name": c.name_for(settings.DEFAULT_LOCALE)} for c in categories],
+        "topic": topic and _topic_json(topic),
+        # tried in order by the writer; topics that duplicate an existing article are skipped
+        "candidates": [_topic_json(t) for t in candidates],
+        # real categories only: the writer must place every article in one of these
+        "categories": [
+            {"slug": c.slug, "name": c.name_for(settings.DEFAULT_LOCALE), "service_urls": service_pages.get(c.slug, {})}
+            for c in categories
+        ],
+        # every published article (for duplicate checks + same-language internal links)
         "existing_articles": [
-            {"title": a.title, "url": _article_url(a), "category": a.category.slug if a.category else None}
+            {"title": a.title, "url": _article_url(a), "keyword": a.focus_keyword,
+             "category": a.category.slug if a.category else None, "urls": by_group.get(a.translation_group, {})}
             for a in recent
         ],
     })
@@ -134,12 +246,18 @@ def create_drafts(request):
     unknown = set(articles) - set(settings.LOCALES)
     if unknown:
         return Response({"detail": f"Unknown languages: {sorted(unknown)}"}, status=status.HTTP_400_BAD_REQUEST)
+    images = {}
     for language, item in articles.items():
         error = _validate_article(language, item)
         if error:
             return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            images[language] = _validate_images(language, item.get("images"))
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
     with transaction.atomic():
+        skipped = _skip_topics(data.get("skipped_topics"))
         topic = None
         if data.get("topic_id") is not None:
             topic = Topic.objects.select_for_update().filter(pk=data["topic_id"]).first()
@@ -148,16 +266,33 @@ def create_drafts(request):
             if topic.status != Topic.PENDING:
                 return Response({"detail": f"Topic is {topic.status}, not pending."}, status=status.HTTP_409_CONFLICT)
 
-        category_slug = data.get("category") or (topic.category.slug if topic and topic.category else OTHERS_SLUG)
-        category = ServiceCategory.objects.filter(slug=category_slug).first() \
-            or ServiceCategory.objects.filter(slug=OTHERS_SLUG).first()
+        # Never file new articles under the hidden "others" category.
+        candidates = [data.get("category"), topic.category.slug if topic and topic.category else None]
+        category = next((c for c in (
+            ServiceCategory.objects.filter(slug=slug).exclude(slug=OTHERS_SLUG).first() for slug in candidates if slug
+        ) if c), None)
+        if category is None:
+            return Response({"detail": "`category` must be one of the real categories (not 'others')."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         submission = Submission.objects.create(
             topic=topic, faq={lang: item.get("faq") or [] for lang, item in articles.items()}
         )
         created = []
+        featured_urls = {}
         for language, item in articles.items():
             title = item["title"].strip()[:255]
+            body = item["body_html"]
+            featured = {}
+            if images[language]:
+                for key, raw, alt in images[language]["inline"]:
+                    _name, url = _store_image(submission.id, language, key, raw)
+                    body = body.replace("{{IMG:%s}}" % key, url)
+                raw, alt = images[language]["featured"]
+                name, featured_urls[language] = _store_image(submission.id, language, "featured", raw)
+                featured = {"featured_image": name, "featured_image_alt": alt, "og_image": name}
+            body = re.sub(r"<figure>\s*<img[^>]*\{\{IMG:[^}]*\}\}[^>]*>\s*</figure>", "", body)  # unused slots
+            meta_title = str(item.get("meta_title") or "").strip() or title
             article = Article.objects.create(
                 translation_group=submission.id,
                 category=category,
@@ -165,8 +300,9 @@ def create_drafts(request):
                 status=Article.DRAFT,
                 title=title,
                 slug=_unique_slug(item.get("slug"), title, language),
-                body=item["body_html"] + _faq_html(language, item.get("faq")),
-                meta_title=title[:70],
+                body=body + _faq_html(language, item.get("faq")),
+                **featured,
+                meta_title=meta_title[:70],
                 meta_description=item["meta_description"].strip()[:160],
                 og_title=title[:70],
                 og_description=item["excerpt"].strip()[:200],
@@ -183,6 +319,8 @@ def create_drafts(request):
         "status": Submission.DRAFT,
         "preview_url": _site_url(f"/api/content/preview/{submission.preview_token}/"),
         "category": category.slug if category else None,
+        "featured_images": featured_urls,
+        "skipped_topics": skipped,
         "articles": [
             {"id": a.id, "language": a.language, "title": a.title, "slug": a.slug} for a in created
         ],
@@ -219,8 +357,10 @@ def reject_submission(request, pk):
         if submission.status != Submission.DRAFT:
             return Response({"detail": f"Submission is {submission.status}."}, status=status.HTTP_409_CONFLICT)
         reason = str(request.data.get("reason") or "").strip()
-        # Drafts were never public; remove them so their slugs are freed.
-        Article.objects.filter(translation_group=submission.id, status=Article.DRAFT).delete()
+        # Drafts were never public; remove them (and their image files) so their slugs are freed.
+        drafts = Article.objects.filter(translation_group=submission.id, status=Article.DRAFT)
+        _delete_images(submission.id, list(drafts))
+        drafts.delete()
         submission.status = Submission.REJECTED
         submission.reject_reason = reason
         submission.decided_at = timezone.now()
@@ -242,6 +382,14 @@ def reject_submission(request, pk):
         "status": Submission.REJECTED,
         "topic_status": topic.status if topic else None,
     })
+
+
+@content_endpoint(["POST"])
+def skip_topics(request):
+    """The writer found these topics already covered: never write them, remember why."""
+    with transaction.atomic():
+        skipped = _skip_topics(request.data.get("topics"))
+    return Response({"skipped": skipped, "pending_count": Topic.objects.filter(status=Topic.PENDING).count()})
 
 
 def preview(request, token):

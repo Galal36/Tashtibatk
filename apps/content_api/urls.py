@@ -7,5 +7,6 @@ urlpatterns = [
     path("articles/", views.create_drafts),
     path("articles/<uuid:pk>/publish/", views.publish_submission),
     path("articles/<uuid:pk>/reject/", views.reject_submission),
+    path("topics/skip/", views.skip_topics),
     path("preview/<uuid:token>/", views.preview, name="content-preview"),
 ]
