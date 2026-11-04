@@ -62,7 +62,6 @@ export default async function ServicePageView({ params }: Props) {
       name: page.title,
       description: page.effective_meta.description,
       serviceType: category?.name ?? page.title,
-      inLanguage: locale,
       url,
       image,
       areaServed: COUNTRY ? { "@type": "Country", name: COUNTRY } : undefined,
