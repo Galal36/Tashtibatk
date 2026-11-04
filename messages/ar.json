@@ -62,7 +62,8 @@
     "learnMore": "اعرف المزيد",
     "related": "مقالات ذات صلة",
     "allServices": "كل الخدمات",
-    "allArticles": "كل مقالات {category}"
+    "allArticles": "كل مقالات {category}",
+    "faqTitle": "أسئلة شائعة"
   },
   "articles": {
     "title": "المقالات والأدلة",

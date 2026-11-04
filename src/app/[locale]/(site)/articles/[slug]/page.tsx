@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { getArticle, getArticlesPage } from "@/lib/api";
 import { ArticleCard } from "@/components/ArticleCard";
-import { alternatesFor } from "@/lib/seo";
+import { alternatesFor, titleFor } from "@/lib/seo";
 import { ArticleTranslationSync } from "@/components/TranslationContext";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArrowRight, WhatsApp } from "@/components/Icon";
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (article.canonical_url) alternates.canonical = article.canonical_url;
 
   return {
-    title: article.effective_meta.title,
+    title: titleFor(article.effective_meta.title),
     description: article.effective_meta.description,
     alternates,
     openGraph: {

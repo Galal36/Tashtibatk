@@ -62,7 +62,8 @@
     "learnMore": "مزید جانیں",
     "related": "متعلقہ مضامین",
     "allServices": "تمام خدمات",
-    "allArticles": "{category} کے تمام مضامین"
+    "allArticles": "{category} کے تمام مضامین",
+    "faqTitle": "اکثر پوچھے جانے والے سوالات"
   },
   "articles": {
     "title": "مضامین اور رہنمائی",

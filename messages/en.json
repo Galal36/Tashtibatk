@@ -62,7 +62,8 @@
     "learnMore": "Learn more",
     "related": "Related articles",
     "allServices": "All services",
-    "allArticles": "All {category} articles"
+    "allArticles": "All {category} articles",
+    "faqTitle": "Frequently asked questions"
   },
   "articles": {
     "title": "Articles & guides",

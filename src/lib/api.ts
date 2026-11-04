@@ -51,6 +51,9 @@ export interface ServicePageDetail {
   slug: string;
   title: string;
   description: string;
+  /** Sanitized HTML (server-side nh3). Empty → render `description` as plain text. */
+  body: string;
+  faq: { q: string; a: string }[];
   category_slug: string;
   effective_meta: { title: string; description: string; og_image: string | null };
 }

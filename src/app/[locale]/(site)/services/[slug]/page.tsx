@@ -7,7 +7,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleCard } from "@/components/ArticleCard";
 import { ServiceIcon, ArrowRight, Phone, WhatsApp, Check } from "@/components/Icon";
 import { site, telLink, whatsappLink } from "@/lib/site";
-import { SITE, abs, allLocales, alternatesFor, brandFor } from "@/lib/seo";
+import { SITE, abs, allLocales, alternatesFor, organizationJsonLd, titleFor } from "@/lib/seo";
 
 export const revalidate = 600;
 
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getServicePage(params.slug, params.locale);
   if (!page) return {};
   return {
-    title: page.effective_meta.title,
+    title: titleFor(page.effective_meta.title),
     description: page.effective_meta.description,
     // service pages share one slug across ar/en/ur
     alternates: alternatesFor(params.locale, allLocales(`/services/${params.slug}`)),
@@ -47,26 +47,46 @@ export default async function ServicePageView({ params }: Props) {
   const tCommon = await getTranslations("common");
   const category = categories.find((c) => c.slug === page.category_slug);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: page.title,
-    description: page.effective_meta.description,
-    serviceType: page.title,
-    areaServed: COUNTRY ? { "@type": "Country", name: COUNTRY } : undefined,
-    url: abs(`/${locale}/services/${slug}`),
-    provider: {
-      "@type": "HomeAndConstructionBusiness",
-      "@id": `${SITE}/#localbusiness`,
-      name: brandFor(locale),
-      url: abs(`/${locale}`),
-      telephone: site.phone,
+  const tHome = await getTranslations("home");
+  const url = abs(`/${locale}/services/${slug}`);
+  const faq = page.faq ?? [];
+  // first image of the rich body (the featured one) unless an og_image is set
+  const image = page.effective_meta.og_image ?? page.body?.match(/<img[^>]+src="([^"]+)"/)?.[1];
+
+  // 1) Service, 2) FAQPage (same list as the visible FAQ), 3) Organization + LocalBusiness
+  const jsonLd: object[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${url}#service`,
+      name: page.title,
+      description: page.effective_meta.description,
+      serviceType: category?.name ?? page.title,
+      inLanguage: locale,
+      url,
+      image,
+      areaServed: COUNTRY ? { "@type": "Country", name: COUNTRY } : undefined,
+      provider: { "@id": `${SITE}/#localbusiness` },
     },
-  };
+  ];
+  if (faq.length) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+  }
+  jsonLd.push(organizationJsonLd(locale, tHome("metaDescription")));
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {jsonLd.map((j, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }} />
+      ))}
 
       {/* Hero */}
       <section className="border-b border-slate-100 bg-gradient-to-b from-brand-50/60 to-white bg-grid">
@@ -95,7 +115,24 @@ export default async function ServicePageView({ params }: Props) {
       {/* Body + sidebar */}
       <section className="container grid gap-10 py-14 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="article-body whitespace-pre-line">{page.description}</div>
+          {page.body ? (
+            // sanitized server-side (same nh3 allowlist as articles)
+            <div className="article-body" dangerouslySetInnerHTML={{ __html: page.body }} />
+          ) : (
+            <div className="article-body whitespace-pre-line">{page.description}</div>
+          )}
+
+          {faq.length > 0 && (
+            <section className="article-body mt-10" aria-labelledby="faq">
+              <h2 id="faq">{t("faqTitle")}</h2>
+              {faq.map((f, i) => (
+                <div key={i}>
+                  <h3>{f.q}</h3>
+                  <p>{f.a}</p>
+                </div>
+              ))}
+            </section>
+          )}
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href={`/contact?service=${slug}`} className="btn-primary btn-lg">

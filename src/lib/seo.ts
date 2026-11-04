@@ -12,6 +12,10 @@ export const SITE = site.url.replace(/\/$/, "");
 export const BRAND: Record<string, string> = { ar: "تشطيباتك", en: "Tashtibatk", ur: "Tashtibatk" };
 export const brandFor = (locale: string) => BRAND[locale] ?? BRAND.en;
 
+/** A meta title that already names the brand must not get the layout's "· Brand" suffix again. */
+export const titleFor = (title: string) =>
+  Object.values(BRAND).some((b) => title.includes(b)) ? { absolute: title } : title;
+
 export const abs = (path: string) => `${SITE}${path.startsWith("/") ? path : `/${path}`}`;
 
 /**
