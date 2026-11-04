@@ -27,6 +27,7 @@ def _abs_url(serializer, image):
 class ArticleListSerializer(serializers.ModelSerializer):
     author_name = serializers.CharField(source="author.full_name", read_only=True)
     category_name = serializers.SerializerMethodField()
+    category_slug = serializers.SlugRelatedField(source="category", slug_field="slug", read_only=True)
     og_image = serializers.SerializerMethodField()
     featured_image = serializers.SerializerMethodField()
 
@@ -34,7 +35,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             "id", "title", "slug", "language", "status", "category",
-            "category_name", "author_name", "og_image", "featured_image",
+            "category_name", "category_slug", "author_name", "og_image", "featured_image",
             "published_at", "updated_at",
         ]
 
@@ -53,6 +54,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
 class ArticleDetailSerializer(serializers.ModelSerializer):
     author_name = serializers.CharField(source="author.full_name", read_only=True)
     category_name = serializers.SerializerMethodField()
+    category_slug = serializers.SlugRelatedField(source="category", slug_field="slug", read_only=True)
     featured_image_url = serializers.SerializerMethodField()
     og_image_url = serializers.SerializerMethodField()
     effective_meta = serializers.SerializerMethodField()
@@ -61,7 +63,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = [
-            "id", "author", "author_name", "category", "category_name",
+            "id", "author", "author_name", "category", "category_name", "category_slug",
             "language", "status", "translation_group", "title", "slug", "body",
             "featured_image", "featured_image_url", "featured_image_alt",
             "meta_title", "meta_description", "focus_keyword",
