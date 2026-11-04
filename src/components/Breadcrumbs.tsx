@@ -1,11 +1,17 @@
+import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { breadcrumbJsonLd, type Crumb } from "@/lib/seo";
 import { ArrowRight } from "./Icon";
 
-type Crumb = { label: string; href?: string };
-
+/** Visible breadcrumb + matching BreadcrumbList structured data. */
 export function Breadcrumbs({ items }: { items: Crumb[] }) {
+  const locale = useLocale();
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(locale, items)) }}
+      />
       <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
         {items.map((c, i) => (
           <li key={i} className="flex items-center gap-1.5">

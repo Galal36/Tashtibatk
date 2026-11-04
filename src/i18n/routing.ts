@@ -14,6 +14,10 @@ export const routing = defineRouting({
   locales,
   defaultLocale,
   localePrefix: "always",
+  // Pages emit their own hreflang tags (lib/seo.ts). The middleware's Link
+  // header assumes identical paths in every locale, which is wrong for
+  // articles (different slug per language), so it is switched off.
+  alternateLinks: false,
 });
 
 export const { Link, redirect, usePathname, useRouter, getPathname } =

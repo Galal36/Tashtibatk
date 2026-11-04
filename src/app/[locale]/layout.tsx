@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { locales, rtlLocales } from "@/i18n/routing";
 import { TranslationProvider } from "@/components/TranslationContext";
+import { SITE, brandFor } from "@/lib/seo";
 import "../globals.css";
 
 const cairo = Cairo({
@@ -18,13 +19,18 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010"),
-  title: {
-    default: process.env.NEXT_PUBLIC_SITE_NAME ?? "Tashtibat",
-    template: `%s · ${process.env.NEXT_PUBLIC_SITE_NAME ?? "Tashtibat"}`,
-  },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const brand = brandFor(params.locale);
+  return {
+    metadataBase: new URL(SITE),
+    title: { default: brand, template: `%s · ${brand}` },
+    openGraph: { siteName: brand },
+  };
+}
 
 /**
  * Root locale layout — owns <html>/<body>, fonts and i18n/translation

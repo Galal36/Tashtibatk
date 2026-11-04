@@ -46,6 +46,9 @@
   .btn-lg {
     @apply px-7 py-3.5 text-base;
   }
+  .btn-sm {
+    @apply px-3.5 py-1.5 text-xs;
+  }
 
   /* Form fields */
   .input {

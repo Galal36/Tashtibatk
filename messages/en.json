@@ -1,6 +1,6 @@
 {
   "site": {
-    "name": "Tashtibat",
+    "name": "Tashtibatk",
     "tagline": "Home services you can trust in Kuwait"
   },
   "nav": {
@@ -51,7 +51,9 @@
     "viewAllArticles": "View all articles",
     "ctaTitle": "Need help with your home today?",
     "ctaSub": "Tell us what you need and we'll get back to you fast.",
-    "ctaBtn": "Request a service"
+    "ctaBtn": "Request a service",
+    "metaTitle": "Tashtibatk | Apartment & Home Finishing Services in Kuwait",
+    "metaDescription": "Tashtibatk is a home finishing company in Kuwait: turnkey apartment and villa finishing, plumbing, carpentry, painting, gypsum board, moving and landscaping."
   },
   "services": {
     "title": "Our services",
@@ -59,12 +61,21 @@
     "request": "Request this service",
     "learnMore": "Learn more",
     "related": "Related articles",
-    "allServices": "All services"
+    "allServices": "All services",
+    "allArticles": "All {category} articles"
   },
   "articles": {
     "title": "Articles & guides",
     "subtitle": "Tips, guides and insights for your home.",
-    "empty": "No articles yet — check back soon."
+    "empty": "No articles yet — check back soon.",
+    "previous": "Previous",
+    "next": "Next",
+    "paginationNav": "Article pages",
+    "pageTitle": "{title} – Page {page}",
+    "related": "Related articles",
+    "byCategory": "Browse articles by category",
+    "categoryTitle": "{category} articles",
+    "categorySubtitle": "All our guides and tips about {category} in Kuwait."
   },
   "contact": {
     "title": "Get in touch",

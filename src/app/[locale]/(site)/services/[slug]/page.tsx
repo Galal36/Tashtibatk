@@ -7,11 +7,10 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleCard } from "@/components/ArticleCard";
 import { ServiceIcon, ArrowRight, Phone, WhatsApp, Check } from "@/components/Icon";
 import { site, telLink, whatsappLink } from "@/lib/site";
+import { SITE, abs, allLocales, alternatesFor, brandFor } from "@/lib/seo";
 
 export const revalidate = 600;
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
-const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Tashtibat";
 const COUNTRY = process.env.NEXT_PUBLIC_SITE_COUNTRY ?? "";
 
 type Props = { params: { slug: string; locale: string } };
@@ -22,14 +21,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: page.effective_meta.title,
     description: page.effective_meta.description,
-    alternates: {
-      canonical: `${SITE}/${params.locale}/services/${params.slug}`,
-      languages: {
-        ar: `/ar/services/${params.slug}`,
-        en: `/en/services/${params.slug}`,
-        ur: `/ur/services/${params.slug}`,
-      },
-    },
+    // service pages share one slug across ar/en/ur
+    alternates: alternatesFor(params.locale, allLocales(`/services/${params.slug}`)),
     openGraph: {
       title: page.effective_meta.title,
       description: page.effective_meta.description,
@@ -61,7 +54,14 @@ export default async function ServicePageView({ params }: Props) {
     description: page.effective_meta.description,
     serviceType: page.title,
     areaServed: COUNTRY ? { "@type": "Country", name: COUNTRY } : undefined,
-    provider: { "@type": "LocalBusiness", name: SITE_NAME, url: SITE },
+    url: abs(`/${locale}/services/${slug}`),
+    provider: {
+      "@type": "HomeAndConstructionBusiness",
+      "@id": `${SITE}/#localbusiness`,
+      name: brandFor(locale),
+      url: abs(`/${locale}`),
+      telephone: site.phone,
+    },
   };
 
   return (
@@ -137,9 +137,15 @@ export default async function ServicePageView({ params }: Props) {
           <div className="container">
             <h2 className="mb-8 text-2xl font-bold">{t("related")}</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {related.slice(0, 3).map((a) => (
+              {related.slice(0, 6).map((a) => (
                 <ArticleCard key={a.id} article={a} locale={locale} />
               ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link href={`/articles/category/${page.category_slug}`} className="btn-outline">
+                {t("allArticles", { category: category?.name ?? page.title })}
+                <ArrowRight width={16} height={16} className="rtl:rotate-180" />
+              </Link>
             </div>
           </div>
         </section>
