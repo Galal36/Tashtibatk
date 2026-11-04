@@ -1,0 +1,109 @@
+{
+  "site": {
+    "name": "Tashtibat",
+    "tagline": "Home services you can trust in Kuwait"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "articles": "Articles",
+    "contact": "Contact",
+    "callNow": "Call now"
+  },
+  "hero": {
+    "badge": "Kuwait's home-services experts",
+    "title": "Reliable home services, done right the first time",
+    "subtitle": "Apartment finishing, plumbing, carpentry, moving and more — vetted professionals across Kuwait, just one call away.",
+    "primary": "Request a service",
+    "secondary": "Explore services",
+    "b1": "Vetted professionals",
+    "b2": "Fast response",
+    "b3": "Fair, upfront pricing"
+  },
+  "home": {
+    "servicesTitle": "Our services",
+    "servicesSub": "Everything your home needs, handled by specialists.",
+    "viewAllServices": "View all services",
+    "whyTitle": "Why choose us",
+    "whySub": "We make home services simple, reliable and stress-free.",
+    "why": {
+      "licensedT": "Skilled & vetted",
+      "licensedD": "Experienced tradespeople, screened for quality and reliability.",
+      "fastT": "Fast response",
+      "fastD": "Quick scheduling and on-time arrival, often the same day.",
+      "fairT": "Transparent pricing",
+      "fairD": "Clear quotes upfront — no hidden fees, no surprises.",
+      "supportT": "Always reachable",
+      "supportD": "Talk to us any time by phone or WhatsApp."
+    },
+    "howTitle": "How it works",
+    "howSub": "Get help in three simple steps.",
+    "how": {
+      "step1T": "Tell us what you need",
+      "step1D": "Share your service and details by form or WhatsApp.",
+      "step2T": "Get a quick quote",
+      "step2D": "We match you with the right professional and confirm pricing.",
+      "step3T": "Job done right",
+      "step3D": "The work is completed on time, to a standard you'll love."
+    },
+    "articlesTitle": "Tips & guides",
+    "articlesSub": "Practical advice for your home and projects.",
+    "viewAllArticles": "View all articles",
+    "ctaTitle": "Need help with your home today?",
+    "ctaSub": "Tell us what you need and we'll get back to you fast.",
+    "ctaBtn": "Request a service"
+  },
+  "services": {
+    "title": "Our services",
+    "subtitle": "Professional home services across Kuwait.",
+    "request": "Request this service",
+    "learnMore": "Learn more",
+    "related": "Related articles",
+    "allServices": "All services"
+  },
+  "articles": {
+    "title": "Articles & guides",
+    "subtitle": "Tips, guides and insights for your home.",
+    "empty": "No articles yet — check back soon."
+  },
+  "contact": {
+    "title": "Get in touch",
+    "subtitle": "Tell us about your project and we'll get back to you quickly.",
+    "name": "Full name",
+    "phone": "Phone number",
+    "email": "Email (optional)",
+    "service": "Service of interest",
+    "message": "Your message",
+    "submit": "Send request",
+    "success": "We received your message and will contact you soon.",
+    "error": "Something went wrong, please try again.",
+    "infoTitle": "Contact details",
+    "callLabel": "Call us",
+    "whatsappLabel": "WhatsApp",
+    "emailLabel": "Email",
+    "hoursLabel": "Working hours",
+    "hoursValue": "Sat–Thu, 8:00 AM – 9:00 PM",
+    "areaLabel": "Service area",
+    "areaValue": "All across Kuwait",
+    "or": "or"
+  },
+  "footer": {
+    "quickLinks": "Quick links",
+    "servicesCol": "Services",
+    "contactCol": "Contact",
+    "rights": "All rights reserved."
+  },
+  "common": {
+    "readMore": "Read more",
+    "loading": "Loading…",
+    "callNow": "Call now",
+    "whatsapp": "WhatsApp",
+    "getQuote": "Get a free quote",
+    "backHome": "Back to home"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "sub": "The page you're looking for doesn't exist or has moved.",
+    "home": "Back to home"
+  }
+}
