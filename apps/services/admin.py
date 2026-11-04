@@ -16,3 +16,7 @@ class ServicePageAdmin(admin.ModelAdmin):
     list_display = ("title", "language", "category", "is_active", "updated_at")
     list_filter = ("language", "is_active", "category")
     search_fields = ("title", "slug")
+    fields = (
+        "category", "language", "slug", "title", "description", "body", "faq",
+        "meta_title", "meta_description", "og_image", "is_active",
+    )

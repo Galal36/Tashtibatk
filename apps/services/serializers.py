@@ -50,9 +50,18 @@ class ServicePageSerializer(serializers.ModelSerializer):
         model = ServicePage
         fields = [
             "id", "category", "category_slug", "language", "slug", "title",
-            "description", "meta_title", "meta_description", "og_image",
+            "description", "body", "faq", "meta_title", "meta_description", "og_image",
             "is_active", "updated_at", "effective_meta",
         ]
+
+    def validate_faq(self, value):
+        from django.core.exceptions import ValidationError
+
+        try:
+            ServicePage(faq=value).clean()
+        except ValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict["faq"])
+        return value
 
     def get_effective_meta(self, obj):
         return {
