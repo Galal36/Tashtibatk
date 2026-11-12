@@ -3,10 +3,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCategories } from "@/lib/api";
 import { ServiceCard } from "@/components/ServiceCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { alternatesFor, allLocales } from "@/lib/seo";
 
 export const revalidate = 600;
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
 
 type Props = { params: { locale: string } };
 
@@ -15,10 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("title"),
     description: t("subtitle"),
-    alternates: {
-      canonical: `${SITE}/${params.locale}/services`,
-      languages: { ar: "/ar/services", en: "/en/services", ur: "/ur/services" },
-    },
+    alternates: alternatesFor(params.locale, allLocales("/services")),
   };
 }
 

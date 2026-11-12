@@ -1,6 +1,6 @@
 /**
- * Tashtibat logotype: a paint-roller mark + the localized wordmark.
- * `name` is passed in so it reads "تشطيبات الكويت" / "Tashtibat" per locale.
+ * Tashtibatk logotype: a paint-roller mark + the localized wordmark.
+ * `name` is passed in so it reads "تشطيباتك" / "Tashtibatk" per locale.
  */
 export function Logo({
   name,

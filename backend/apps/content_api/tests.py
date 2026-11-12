@@ -122,6 +122,97 @@ class ContentApiTests(TestCase):
         # a rejected set can't be published
         self.assertEqual(self.client.post(f"/api/content/articles/{group2}/publish/", **TOKEN).status_code, 409)
 
-    def test_unknown_category_falls_back_to_others(self):
-        res = self.create(category="nope")
-        self.assertEqual(res.data["category"], "others")
+    def test_unknown_category_falls_back_to_topic_category(self):
+        res = self.create(category="no-such-category")
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data["category"], "plumbing")
+
+    def test_others_category_is_refused(self):
+        others_topic = Topic.objects.create(title="موضوع عام", category=ServiceCategory.objects.get(slug="others"))
+        res = self.create(topic_id=others_topic.id, category="others")
+        self.assertEqual(res.status_code, 400)
+        res = self.create(topic_id=others_topic.id, category="plumbing")
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data["category"], "plumbing")
+
+    def test_next_topic_lists_real_categories_and_translations(self):
+        res = self.client.get("/api/content/next/", **TOKEN)
+        self.assertNotIn("others", [c["slug"] for c in res.data["categories"]])
+        sub = self.create().data
+        self.client.post(f"/api/content/articles/{sub['id']}/publish/", **TOKEN)
+        res = self.client.get("/api/content/next/", **TOKEN)
+        item = res.data["existing_articles"][0]
+        self.assertEqual(set(item["urls"]), {"ar", "en", "ur"})
+
+    def test_skip_topics_and_candidates(self):
+        second = Topic.objects.create(title="انسداد المجاري", category=self.plumbing, priority=4)
+        res = self.client.get("/api/content/next/", **TOKEN)
+        self.assertEqual([c["id"] for c in res.data["candidates"]], [self.topic.id, second.id])
+        res = self.client.post("/api/content/topics/skip/", {"topics": [{"id": self.topic.id, "reason": "duplicate of /ar/articles/x"}]},
+                               format="json", **TOKEN)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.data["skipped"]), 1)
+        self.topic.refresh_from_db()
+        self.assertEqual(self.topic.status, Topic.SKIPPED)
+        self.assertIn("duplicate of /ar/articles/x", self.topic.notes)
+        # drafts for the 2nd candidate also mark the skipped one (idempotent)
+        res = self.create(topic_id=second.id, skipped_topics=[{"id": self.topic.id, "reason": "again"}])
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data["skipped_topics"], [])
+
+def webp(color=(200, 100, 50), size=(1200, 675), fmt="WEBP"):
+    import base64, io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", size, color).save(buf, fmt)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+class ContentApiImageTests(ContentApiTests):
+    def setUp(self):
+        import tempfile
+        from django.test import override_settings
+        super().setUp()
+        self.media = tempfile.mkdtemp()
+        self.override = override_settings(MEDIA_ROOT=self.media)
+        self.override.enable()
+
+    def tearDown(self):
+        import shutil
+        self.override.disable()
+        shutil.rmtree(self.media, ignore_errors=True)
+
+    def with_images(self, lang, inline=1):
+        body = '<p>Intro</p><figure><img src="{{IMG:inline1}}" alt="x" width="1200" height="675" loading="lazy"></figure>' \
+               '<h2>Two</h2><figure><img src="{{IMG:inline2}}" alt="y" width="1200" height="675" loading="lazy"></figure><p>End</p>'
+        images = {"featured": {"data": webp(), "alt": f"featured {lang}"},
+                  "inline": [{"key": "inline1", "data": webp((10, 20, 30)), "alt": "x"}][:inline]}
+        return article(lang, body_html=body, images=images, meta_title=f"Meta {lang} | Tashtibatk")
+
+    def test_images_stored_and_linked(self):
+        import os
+        res = self.create(articles={l: self.with_images(l) for l in ("ar", "en", "ur")})
+        self.assertEqual(res.status_code, 201, res.data)
+        a = Article.objects.get(translation_group=res.data["id"], language="ar")
+        self.assertEqual(a.featured_image_alt, "featured ar")
+        self.assertEqual(a.og_image.name, a.featured_image.name)
+        self.assertTrue(os.path.exists(a.featured_image.path))
+        self.assertIn("/media/articles/auto/", a.body)
+        self.assertIn('loading="lazy"', a.body)
+        self.assertNotIn("{{IMG", a.body)                 # unused slot (inline2) removed
+        self.assertEqual(a.meta_title, "Meta ar | Tashtibatk")
+        self.assertIn("ar", res.data["featured_images"])
+        # reject removes the files
+        folder = os.path.dirname(a.featured_image.path)
+        self.client.post(f"/api/content/articles/{res.data['id']}/reject/", format="json", **TOKEN)
+        self.assertFalse(os.path.exists(folder))
+
+    def test_bad_images_refused(self):
+        bad = self.with_images("ar")
+        bad["images"]["featured"]["data"] = webp(size=(800, 600))
+        self.assertEqual(self.create(articles={"ar": bad}).status_code, 400)
+        bad["images"]["featured"]["data"] = webp(fmt="PNG")
+        self.assertEqual(self.create(articles={"ar": bad}).status_code, 400)
+        bad["images"]["featured"] = {"data": "not base64!!", "alt": "a"}
+        self.assertEqual(self.create(articles={"ar": bad}).status_code, 400)
+        self.assertEqual(Submission.objects.count(), 0)

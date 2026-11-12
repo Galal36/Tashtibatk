@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { getArticle } from "@/lib/api";
+import { getArticle, getArticlesPage } from "@/lib/api";
+import { ArticleCard } from "@/components/ArticleCard";
+import { alternatesFor, titleFor } from "@/lib/seo";
 import { ArticleTranslationSync } from "@/components/TranslationContext";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArrowRight, WhatsApp } from "@/components/Icon";
@@ -10,7 +12,6 @@ import { whatsappLink } from "@/lib/site";
 
 export const revalidate = 300;
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
 const OG_LOCALE: Record<string, string> = { ar: "ar", en: "en", ur: "ur" };
 
 type Props = { params: { slug: string; locale: string } };
@@ -31,21 +32,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = await getArticle(params.slug, params.locale);
   if (!article) return {};
 
-  // hreflang alternates from the article's linked translations
-  const languages: Record<string, string> = {
-    [params.locale]: `/${params.locale}/articles/${params.slug}`,
-  };
+  // self + every PUBLISHED translation (linked by translation_group)
+  const paths: Record<string, string> = { [params.locale]: `/${params.locale}/articles/${params.slug}` };
   for (const [lang, slug] of Object.entries(article.translations)) {
-    languages[lang] = `/${lang}/articles/${slug}`;
+    paths[lang] = `/${lang}/articles/${slug}`;
   }
+  const alternates = alternatesFor(params.locale, paths)!;
+  if (article.canonical_url) alternates.canonical = article.canonical_url;
 
   return {
-    title: article.effective_meta.title,
+    title: titleFor(article.effective_meta.title),
     description: article.effective_meta.description,
-    alternates: {
-      canonical: article.canonical_url || `${SITE}/${params.locale}/articles/${params.slug}`,
-      languages,
-    },
+    alternates,
     openGraph: {
       title: article.effective_meta.title,
       description: article.effective_meta.description,
@@ -67,6 +65,11 @@ export default async function ArticlePage({ params }: Props) {
   const tNav = await getTranslations("nav");
   const tCommon = await getTranslations("common");
   const date = formatDate(article.published_at, locale);
+  const related = article.category_slug
+    ? ((await getArticlesPage(locale, 1, article.category_slug))?.results ?? [])
+        .filter((a) => a.id !== article.id)
+        .slice(0, 4)
+    : [];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -88,6 +91,9 @@ export default async function ArticlePage({ params }: Props) {
           items={[
             { label: tNav("home"), href: "/" },
             { label: t("title"), href: "/articles" },
+            ...(article.category_slug && article.category_name
+              ? [{ label: article.category_name, href: `/articles/category/${article.category_slug}` }]
+              : []),
             { label: article.title },
           ]}
         />
@@ -134,6 +140,19 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </div>
       </article>
+
+      {related.length > 0 && (
+        <section className="border-t border-slate-100 bg-slate-50/60 py-14">
+          <div className="container">
+            <h2 className="mb-8 text-2xl font-bold">{t("related")}</h2>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {related.map((a) => (
+                <ArticleCard key={a.id} article={a} locale={locale} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 }

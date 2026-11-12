@@ -7,11 +7,10 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleCard } from "@/components/ArticleCard";
 import { ServiceIcon, ArrowRight, Phone, WhatsApp, Check } from "@/components/Icon";
 import { site, telLink, whatsappLink } from "@/lib/site";
+import { SITE, abs, allLocales, alternatesFor, organizationJsonLd, titleFor } from "@/lib/seo";
 
 export const revalidate = 600;
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
-const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Tashtibat";
 const COUNTRY = process.env.NEXT_PUBLIC_SITE_COUNTRY ?? "";
 
 type Props = { params: { slug: string; locale: string } };
@@ -20,16 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getServicePage(params.slug, params.locale);
   if (!page) return {};
   return {
-    title: page.effective_meta.title,
+    title: titleFor(page.effective_meta.title),
     description: page.effective_meta.description,
-    alternates: {
-      canonical: `${SITE}/${params.locale}/services/${params.slug}`,
-      languages: {
-        ar: `/ar/services/${params.slug}`,
-        en: `/en/services/${params.slug}`,
-        ur: `/ur/services/${params.slug}`,
-      },
-    },
+    // service pages share one slug across ar/en/ur
+    alternates: alternatesFor(params.locale, allLocales(`/services/${params.slug}`)),
     openGraph: {
       title: page.effective_meta.title,
       description: page.effective_meta.description,
@@ -54,19 +47,45 @@ export default async function ServicePageView({ params }: Props) {
   const tCommon = await getTranslations("common");
   const category = categories.find((c) => c.slug === page.category_slug);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: page.title,
-    description: page.effective_meta.description,
-    serviceType: page.title,
-    areaServed: COUNTRY ? { "@type": "Country", name: COUNTRY } : undefined,
-    provider: { "@type": "LocalBusiness", name: SITE_NAME, url: SITE },
-  };
+  const tHome = await getTranslations("home");
+  const url = abs(`/${locale}/services/${slug}`);
+  const faq = page.faq ?? [];
+  // first image of the rich body (the featured one) unless an og_image is set
+  const image = page.effective_meta.og_image ?? page.body?.match(/<img[^>]+src="([^"]+)"/)?.[1];
+
+  // 1) Service, 2) FAQPage (same list as the visible FAQ), 3) Organization + LocalBusiness
+  const jsonLd: object[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${url}#service`,
+      name: page.title,
+      description: page.effective_meta.description,
+      serviceType: category?.name ?? page.title,
+      url,
+      image,
+      areaServed: COUNTRY ? { "@type": "Country", name: COUNTRY } : undefined,
+      provider: { "@id": `${SITE}/#localbusiness` },
+    },
+  ];
+  if (faq.length) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+  }
+  jsonLd.push(organizationJsonLd(locale, tHome("metaDescription")));
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {jsonLd.map((j, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }} />
+      ))}
 
       {/* Hero */}
       <section className="border-b border-slate-100 bg-gradient-to-b from-brand-50/60 to-white bg-grid">
@@ -95,7 +114,24 @@ export default async function ServicePageView({ params }: Props) {
       {/* Body + sidebar */}
       <section className="container grid gap-10 py-14 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="article-body whitespace-pre-line">{page.description}</div>
+          {page.body ? (
+            // sanitized server-side (same nh3 allowlist as articles)
+            <div className="article-body" dangerouslySetInnerHTML={{ __html: page.body }} />
+          ) : (
+            <div className="article-body whitespace-pre-line">{page.description}</div>
+          )}
+
+          {faq.length > 0 && (
+            <section className="article-body mt-10" aria-labelledby="faq">
+              <h2 id="faq">{t("faqTitle")}</h2>
+              {faq.map((f, i) => (
+                <div key={i}>
+                  <h3>{f.q}</h3>
+                  <p>{f.a}</p>
+                </div>
+              ))}
+            </section>
+          )}
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href={`/contact?service=${slug}`} className="btn-primary btn-lg">
@@ -137,9 +173,15 @@ export default async function ServicePageView({ params }: Props) {
           <div className="container">
             <h2 className="mb-8 text-2xl font-bold">{t("related")}</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {related.slice(0, 3).map((a) => (
+              {related.slice(0, 6).map((a) => (
                 <ArticleCard key={a.id} article={a} locale={locale} />
               ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link href={`/articles/category/${page.category_slug}`} className="btn-outline">
+                {t("allArticles", { category: category?.name ?? page.title })}
+                <ArrowRight width={16} height={16} className="rtl:rotate-180" />
+              </Link>
             </div>
           </div>
         </section>

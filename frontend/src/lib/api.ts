@@ -33,6 +33,7 @@ export interface ArticleListItem {
   slug: string;
   language: string;
   category_name: string | null;
+  category_slug: string | null;
   featured_image: string | null;
   og_image: string | null;
   published_at: string | null;
@@ -50,11 +51,17 @@ export interface ServicePageDetail {
   slug: string;
   title: string;
   description: string;
+  /** Sanitized HTML (server-side nh3). Empty → render `description` as plain text. */
+  body: string;
+  faq: { q: string; a: string }[];
   category_slug: string;
   effective_meta: { title: string; description: string; og_image: string | null };
 }
 
-type Paginated<T> = { results: T[] };
+type Paginated<T> = { results: T[]; count?: number };
+
+/** Matches Django REST_FRAMEWORK PAGE_SIZE. */
+export const PAGE_SIZE = 20;
 
 export const getCategories = (lang: string) =>
   get<Paginated<Category>>(`/api/categories/?lang=${lang}`).then((d) => d?.results ?? []);
@@ -63,6 +70,17 @@ export const getArticles = (lang: string, category?: string) =>
   get<Paginated<ArticleListItem>>(
     `/api/articles/?lang=${lang}${category ? `&category=${category}` : ""}`,
   ).then((d) => d?.results ?? []);
+
+/** One page of published articles (+ total count) for paginated listings.
+ *  Returns null when the page is out of range (DRF answers 404). */
+export const getArticlesPage = async (lang: string, page: number, category?: string) => {
+  const d = await get<Paginated<ArticleListItem>>(
+    `/api/articles/?lang=${lang}&page=${page}${category ? `&category=${encodeURIComponent(category)}` : ""}`,
+  );
+  if (!d) return null;
+  const count = d.count ?? d.results.length;
+  return { results: d.results, count, totalPages: Math.max(1, Math.ceil(count / PAGE_SIZE)) };
+};
 
 export const getArticle = (slug: string, lang: string) =>
   get<ArticleDetail>(`/api/articles/${slug}/?lang=${lang}`);

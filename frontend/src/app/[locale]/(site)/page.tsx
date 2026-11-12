@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { getArticles, getCategories } from "@/lib/api";
@@ -7,8 +8,19 @@ import {
   ServiceIcon, ArrowRight, Check, Shield, Clock24, Wallet, WhatsApp,
 } from "@/components/Icon";
 import { whatsappLink } from "@/lib/site";
+import { alternatesFor, allLocales, organizationJsonLd } from "@/lib/seo";
 
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: "home" });
+  return {
+    title: { absolute: t("metaTitle") },
+    description: t("metaDescription"),
+    alternates: alternatesFor(params.locale, allLocales("")),
+    openGraph: { title: t("metaTitle"), description: t("metaDescription"), type: "website" },
+  };
+}
 
 export default async function HomePage({ params }: { params: { locale: string } }) {
   const { locale } = params;
@@ -35,6 +47,10 @@ export default async function HomePage({ params }: { params: { locale: string } 
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd(locale, t("metaDescription"))) }}
+      />
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-slate-100 bg-grid">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand-50/60 to-white" />

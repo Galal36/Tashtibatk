@@ -53,6 +53,12 @@ class ServicePage(models.Model):
     slug = models.SlugField(max_length=255)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    # Rich landing-page body (sanitized HTML, same allowlist as articles). When
+    # empty the frontend falls back to the plain-text `description`.
+    body = models.TextField(blank=True, default="")
+    # [{"q": "...", "a": "..."}] — rendered visibly on the page AND as FAQPage
+    # JSON-LD from this same list, so the two can never drift apart.
+    faq = models.JSONField(blank=True, default=list)
 
     # SEO
     meta_title = models.CharField(max_length=70, blank=True)
@@ -76,6 +82,30 @@ class ServicePage(models.Model):
 
     def __str__(self):
         return f"[{self.language.upper()}] {self.title}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not isinstance(self.faq, list) or not all(
+            isinstance(f, dict) and set(f) == {"q", "a"}
+            and all(isinstance(v, str) and v.strip() for v in f.values())
+            for f in self.faq
+        ):
+            raise ValidationError({"faq": 'Must be a list of {"q": "...", "a": "..."} with non-empty text.'})
+
+    def save(self, *args, **kwargs):
+        # local import: apps.articles.models imports this module
+        from django.utils.html import strip_tags
+
+        from apps.articles.models import clean_body
+
+        self.body = clean_body(self.body) if self.body else ""
+        if isinstance(self.faq, list):  # FAQ is plain text only
+            self.faq = [
+                {"q": strip_tags(f["q"]).strip(), "a": strip_tags(f["a"]).strip()}
+                for f in self.faq if isinstance(f, dict) and f.get("q") and f.get("a")
+            ]
+        super().save(*args, **kwargs)
 
     @property
     def effective_meta_title(self):

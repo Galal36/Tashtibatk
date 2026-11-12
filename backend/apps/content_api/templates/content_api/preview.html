@@ -25,10 +25,13 @@
 <article id="{{ a.obj.language }}" lang="{{ a.obj.language }}" dir="{% if a.rtl %}rtl{% else %}ltr{% endif %}">
   <div class="meta" dir="ltr">
     <div><strong>{{ a.obj.language|upper }}</strong> · category: {{ a.obj.category.slug|default:"—" }} · slug: {{ a.obj.slug }}</div>
+    <div>meta title ({{ a.obj.meta_title|length }}/60): <span dir="auto">{{ a.obj.meta_title }}</span></div>
     <div>meta description ({{ a.obj.meta_description|length }}/160): <span dir="auto">{{ a.obj.meta_description }}</span></div>
+    <div>featured image alt: <span dir="auto">{{ a.obj.featured_image_alt|default:"— (no images)" }}</span></div>
     <div>excerpt: <span dir="auto">{{ a.obj.og_description }}</span></div>
   </div>
   <h1>{{ a.obj.title }}</h1>
+  {% if a.obj.featured_image %}<img src="{{ a.obj.featured_image.url }}" alt="{{ a.obj.featured_image_alt }}" width="1200" height="675">{% endif %}
   {{ a.obj.body|safe }}
 </article>
 {% empty %}

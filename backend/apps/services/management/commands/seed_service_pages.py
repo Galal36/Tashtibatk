@@ -52,9 +52,9 @@ INTRO = {
 }
 
 CLOSING = {
-    "en": "Contact Tashtibat today for a fast, free quote — we serve all areas of Kuwait.",
-    "ar": "تواصل مع تشطيبات الكويت اليوم للحصول على عرض سعر مجاني وسريع — نخدم جميع مناطق الكويت.",
-    "ur": "آج ہی تشطیبات کویت سے رابطہ کریں مفت اور فوری تخمینہ کے لیے — ہم کویت کے تمام علاقوں میں خدمات فراہم کرتے ہیں۔",
+    "en": "Contact Tashtibatk today for a fast, free quote — we serve all areas of Kuwait.",
+    "ar": "تواصل مع تشطيباتك اليوم للحصول على عرض سعر مجاني وسريع — نخدم جميع مناطق الكويت.",
+    "ur": "آج ہی Tashtibatk سے رابطہ کریں مفت اور فوری تخمینہ کے لیے — ہم کویت کے تمام علاقوں میں خدمات فراہم کرتے ہیں۔",
 }
 
 SUFFIX = {"en": " in Kuwait", "ar": " في الكويت", "ur": " — کویت"}
